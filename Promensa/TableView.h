@@ -15,15 +15,21 @@ private:
 	HWND hWndList;
 	SortState order;
 	int prevColumn;
+	vector<wstring> columns;
+	vector<vector<wstring>> rows;
+	//vector<vector<wstring>> entities;
+	//private:
+		//void NextState();
 public:
 	vector<wstring> Split(wstring, wstring);
-	vector<vector<wstring>> ReadFile();
+	void ReadFile();
 	void SaveFile();
 public:
 	TableView();
 	TableView(HWND);
 	~TableView();
-	void AddColumn();
-	void AddRow();
+	void AddColumn(int, wstring, int);
+	void AddRow(int, int, vector<wstring>);
 	void FillTable(HWND);
 };
+

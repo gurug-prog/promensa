@@ -6,6 +6,9 @@ TableView::TableView()
 {
     this->hWndList = NULL;
     this->order = SortState::Unsorted;
+	this->prevColumn = 0;
+	// this->columns = ; how to init vector???
+	// this->rows = ; how to init vector???
 }
 
 TableView::TableView(HWND hWndParent)
@@ -24,10 +27,46 @@ TableView::TableView(HWND hWndParent)
 		x, y, listWidth, listHeight,
 		hWndParent, (HMENU)IDC_LISTVIEW, hInst, 0);
     this->order = SortState::Unsorted;
+	this->prevColumn = 0;
 }
 
 TableView::~TableView()
 {
+}
+
+void TableView::AddColumn(int columnIndex, wstring value, int width)
+{
+	const int maxLen = 128;
+
+	LVCOLUMN lvc;
+	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
+	lvc.fmt = LVCFMT_LEFT;
+	lvc.cx = width;
+	lvc.iSubItem = columnIndex;
+	lvc.pszText = const_cast<LPWSTR>(value.c_str());
+	lvc.cchTextMax = maxLen;
+
+	ListView_InsertColumn(this->hWndList, columnIndex, &lvc);
+}
+
+void TableView::AddRow(int colsCount, int rowIndex, vector<wstring> row)
+{
+	const int maxLen = 128;
+
+	for (int columnIndex = 0; columnIndex < colsCount; ++columnIndex)
+	{
+		wstring value = row[columnIndex];
+		LVITEM lvi;
+
+		lvi.mask = LVIF_TEXT;
+		lvi.iItem = rowIndex;
+		lvi.iSubItem = columnIndex;
+		lvi.pszText = const_cast<LPWSTR>(value.c_str());
+		lvi.cchTextMax = maxLen;
+
+		if (columnIndex > 0) ListView_SetItem(hWndList, &lvi);
+		else ListView_InsertItem(hWndList, &lvi);
+	}
 }
 
 vector<wstring> TableView::Split(wstring str, wstring delim)
@@ -46,7 +85,7 @@ vector<wstring> TableView::Split(wstring str, wstring delim)
 	return splittedValues;
 }
 
-vector<vector<wstring>> TableView::ReadFile()
+void TableView::ReadFile()
 {
 	vector<vector<wstring>> entities = { };
 	wstring str;
@@ -61,54 +100,30 @@ vector<vector<wstring>> TableView::ReadFile()
 		// auto vector = ReadFile();
 	}
 
-	return entities;
+	this->columns = entities[0];
+	entities.erase(entities.begin());
+	this->rows = entities;
 }
 
 void TableView::FillTable(HWND hWnd)
 {
 	ListView_DeleteAllItems(this->hWndList);
 
-	auto rows = ReadFile();
-	auto columns = rows[0];
-	rows.erase(rows.begin());
-	
-	const int maxLen = 128;
-
 	RECT rcl;
 	GetClientRect(hWnd, &rcl);
 
-    LVCOLUMN lvc;
-    lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-    lvc.fmt = LVCFMT_LEFT;
-    lvc.cx = (rcl.right - rcl.left) * 0.1; // ширина
-
-    for (int index = 0; index < columns.size(); index++)
+	// insert columns
+    for (int index = 0; index < this->columns.size(); ++index)
     {
-        wstring textStr = columns[index];
-        lvc.iSubItem = index;
-        lvc.pszText = const_cast<LPWSTR>(textStr.c_str());
-        lvc.cchTextMax = maxLen;
-        ListView_InsertColumn(hWndList, (index), &lvc);
+        wstring textStr = this->columns[index];
+		int width = (rcl.right - rcl.left) * 0.1;
+		this->AddColumn(index, textStr, width);
     }
 
-
     // insert rows
-    LVITEM lvi;
-    wstring text = L"";
-    for (int i = 0; i < rows.size(); i++)
+    for (int rowIndex = 0; rowIndex < this->rows.size(); ++rowIndex)
     {
-        for (int j = 0; j < columns.size(); j++)
-        {
-            text = rows[i][j];
-
-            lvi.mask = LVIF_TEXT;
-            lvi.iItem = i;
-            lvi.iSubItem = j;
-            lvi.pszText = const_cast<LPWSTR>(text.c_str());
-            lvi.cchTextMax = maxLen;
-
-            if (j > 0) ListView_SetItem(hWndList, &lvi);
-            else ListView_InsertItem(hWndList, &lvi);
-        }
+		auto row = this->rows[rowIndex];
+		this->AddRow(this->columns.size(), rowIndex, row);
     }
 }

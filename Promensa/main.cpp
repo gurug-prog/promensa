@@ -100,8 +100,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 		tv = new TableView(hWnd);
+		tv->ReadFile();
 		tv->FillTable(hWnd);
-		//tv->ReadFile();
 		break;
 	}
 	case WM_COMMAND:

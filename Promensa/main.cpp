@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "Promensa.h"
 #include "TableView.h"
+#include "commdlg.h"
 
 #define MAX_LOADSTRING 100
 
@@ -17,6 +18,10 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 TableView* tv = nullptr;
+
+LPWSTR ProcessOpenDlg(HWND);
+//void ProcessSaveDlg(HWND);
+//void ProcessSaveAsDlg(HWND);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -100,8 +105,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 		tv = new TableView(hWnd);
-		tv->ReadFile();
-		tv->FillTable(hWnd);
 		break;
 	}
 	case WM_COMMAND:
@@ -109,6 +112,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		int wmId = LOWORD(wParam);
 		switch (wmId)
 		{
+		case IDM_FILE_OPEN:
+		{
+			auto fileName = ProcessOpenDlg(hWnd);
+			tv->ReadFile(fileName);
+			//tv->Clear();
+			tv->FillTable(hWnd);
+			break;
+		}
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
@@ -154,4 +165,23 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	return (INT_PTR)FALSE;
+}
+
+LPWSTR ProcessOpenDlg(HWND hWnd)
+{
+	LPWSTR fileName = new WCHAR[256];
+
+	OPENFILENAME ofn;
+	fileName[0] = 0;
+	memset(&ofn, 0, sizeof(OPENFILENAME));
+
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFilter = L"TSV-files	(*.tsv)\0*.tsv\0\0";
+	ofn.lpstrDefExt = L"tsv";
+	ofn.lpstrFile = fileName;
+	ofn.nMaxFile = 256;
+
+	if (GetOpenFileName(&ofn)) return fileName;
+	else return NULL;
 }

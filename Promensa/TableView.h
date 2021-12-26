@@ -22,7 +22,7 @@ private:
 		//void NextState();
 public:
 	vector<wstring> Split(wstring, wstring);
-	void ReadFile();
+	void ReadFile(LPWSTR);
 	void SaveFile();
 public:
 	TableView();
@@ -30,6 +30,7 @@ public:
 	~TableView();
 	void AddColumn(int, wstring, int);
 	void AddRow(int, int, vector<wstring>);
+	void Clear();
 	void FillTable(HWND);
 };
 

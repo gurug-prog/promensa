@@ -1,5 +1,6 @@
 #include "TableView.h"
 #include "Promensa.h"
+#include "commdlg.h"
 
 
 TableView::TableView()
@@ -85,11 +86,14 @@ vector<wstring> TableView::Split(wstring str, wstring delim)
 	return splittedValues;
 }
 
-void TableView::ReadFile()
+void TableView::ReadFile(LPWSTR fileName)
 {
+	columns.clear();
+	rows.clear();
+
 	vector<vector<wstring>> entities = { };
 	wstring str;
-	wifstream file("./entities.tsv");
+	wifstream file(L"./entities.tsv");
 	while (getline(file, str))
 	{
 		auto attibutes = Split(str, L"\t");
@@ -103,12 +107,21 @@ void TableView::ReadFile()
 	this->columns = entities[0];
 	entities.erase(entities.begin());
 	this->rows = entities;
+	delete fileName;
+}
+
+void TableView::Clear()
+{
+	ListView_DeleteAllItems(this->hWndList);
+	HWND hWndHeader = (HWND)::SendMessage(this->hWndList, LVM_GETHEADER, 0, 0);
+	int columnCount = (int)::SendMessage(hWndHeader, HDM_GETITEMCOUNT, 0, 0L);
+	for (int iCol = columnCount - 1; iCol >= 0; --iCol)
+		ListView_DeleteColumn(this->hWndList, iCol);
 }
 
 void TableView::FillTable(HWND hWnd)
 {
-	ListView_DeleteAllItems(this->hWndList);
-
+	this->Clear();
 	RECT rcl;
 	GetClientRect(hWnd, &rcl);
 

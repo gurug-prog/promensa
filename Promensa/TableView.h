@@ -13,17 +13,20 @@ class TableView
 {
 private:
 	HWND hWndList;
-	SortState order;
+	//SortState order;
+	int order;
 	int prevColumn;
 	vector<wstring> columns;
 	vector<vector<wstring>> rows;
-	//vector<vector<wstring>> entities;
-	//private:
-		//void NextState();
-public:
+	RECT rcl;
+	LPWSTR fileName;
+private:
 	vector<wstring> Split(wstring, wstring);
-	void ReadFile(LPWSTR);
-	void SaveFile();
+	//void SaveFile();
+	//void GetCell();
+	//int CALLBACK CompareListItemsAsc(LPARAM, LPARAM, LPARAM);
+	//int CALLBACK CompareListItemsDesc(LPARAM, LPARAM, LPARAM);
+	//void NextState();
 public:
 	TableView();
 	TableView(HWND);
@@ -31,6 +34,8 @@ public:
 	void AddColumn(int, wstring, int);
 	void AddRow(int, int, vector<wstring>);
 	void Clear();
-	void FillTable(HWND);
+	void FillTable(LPWSTR);
+	void OnColumnClick(LPARAM);
+	wstring GetItem(int, int);
+	void ReadFile(LPWSTR);
 };
-

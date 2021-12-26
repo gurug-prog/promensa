@@ -102,6 +102,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
+	case WM_NOTIFY:
+	{
+		LPNMHDR lpnmhdr = (LPNMHDR)lParam;
+		if (lpnmhdr->idFrom == IDC_LISTVIEW &&
+			lpnmhdr->code == LVN_COLUMNCLICK)
+			//MessageBox(hDlg, L"Column clicked", L"Mesage", 0);
+			tv->OnColumnClick(lParam);
+		break;
+	}
 	case WM_CREATE:
 	{
 		tv = new TableView(hWnd);
@@ -115,9 +124,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_FILE_OPEN:
 		{
 			auto fileName = ProcessOpenDlg(hWnd);
-			tv->ReadFile(fileName);
 			//tv->Clear();
-			tv->FillTable(hWnd);
+			//tv->ReadFile(fileName);
+			tv->FillTable(fileName);
 			break;
 		}
 		case IDM_ABOUT:

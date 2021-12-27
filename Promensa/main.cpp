@@ -21,7 +21,7 @@ TableView* tv = nullptr;
 
 LPWSTR ProcessOpenDlg(HWND);
 //void ProcessSaveDlg(HWND);
-//void ProcessSaveAsDlg(HWND);
+LPWSTR ProcessSaveAsDlg(HWND);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -85,7 +85,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	hInst = hInstance;
 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+		CW_USEDEFAULT, 0, 600, 500, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hWnd)
 	{
@@ -124,9 +124,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_FILE_OPEN:
 		{
 			auto fileName = ProcessOpenDlg(hWnd);
-			//tv->Clear();
-			//tv->ReadFile(fileName);
-			tv->FillTable(fileName);
+			if (fileName) tv->FillTable(fileName);
+			break;
+		}
+		case IDM_FILE_SAVE:
+		{
+			tv->SaveFile(nullptr);
+			break;
+		}
+		case IDM_FILE_SAVEAS:
+		{
+			auto fileName = ProcessSaveAsDlg(hWnd);
+			if (fileName) tv->SaveFile(fileName);
 			break;
 		}
 		case IDM_ABOUT:
@@ -192,5 +201,24 @@ LPWSTR ProcessOpenDlg(HWND hWnd)
 	ofn.nMaxFile = 256;
 
 	if (GetOpenFileName(&ofn)) return fileName;
+	else return NULL;
+}
+
+LPWSTR ProcessSaveAsDlg(HWND hWnd)
+{
+	LPWSTR fileName = new WCHAR[256];
+
+	OPENFILENAME ofn;
+	fileName[0] = 0;
+	memset(&ofn, 0, sizeof(OPENFILENAME));
+
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFilter = L"TSV-files	(*.tsv)\0*.tsv\0\0";
+	ofn.lpstrDefExt = L"tsv";
+	ofn.lpstrFile = fileName;
+	ofn.nMaxFile = 256;
+
+	if (GetSaveFileName(&ofn)) return fileName;
 	else return NULL;
 }

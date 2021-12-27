@@ -22,6 +22,7 @@ private:
 	LPWSTR fileName;
 private:
 	vector<wstring> Split(wstring, wstring);
+	vector<wstring> GetEntitiesStrings();
 	//void SaveFile();
 	//void GetCell();
 	//int CALLBACK CompareListItemsAsc(LPARAM, LPARAM, LPARAM);
@@ -38,4 +39,5 @@ public:
 	void OnColumnClick(LPARAM);
 	wstring GetItem(int, int);
 	void ReadFile(LPWSTR);
+	void SaveFile(LPWSTR);
 };

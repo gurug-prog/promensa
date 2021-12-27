@@ -3,7 +3,6 @@
 #include <commctrl.h>
 #pragma comment (lib, "comctl32.lib")
 #include <string>
-#include <fstream>
 #include <vector>
 #include "SortState.h"
 
@@ -13,31 +12,29 @@ class TableView
 {
 private:
 	HWND hWndList;
-	//SortState order;
-	int order;
-	int prevColumn;
+	SortState order;
+	int selectedCol;
 	vector<wstring> columns;
 	vector<vector<wstring>> rows;
 	RECT rcl;
 	LPWSTR fileName;
 private:
+	void AddColumn(int, wstring, int);
+	void AddRow(int, int, vector<wstring>);
+	bool DoubleTryParse(wstring, double*);
+	void Clear();
+	wstring GetCell(int, int);
+	void ReadFile(LPWSTR);
+	void HandleSortState(LPARAM);
 	vector<wstring> Split(wstring, wstring);
 	vector<wstring> GetEntitiesStrings();
-	//void SaveFile();
-	//void GetCell();
-	//int CALLBACK CompareListItemsAsc(LPARAM, LPARAM, LPARAM);
-	//int CALLBACK CompareListItemsDesc(LPARAM, LPARAM, LPARAM);
-	//void NextState();
 public:
 	TableView();
 	TableView(HWND);
 	~TableView();
-	void AddColumn(int, wstring, int);
-	void AddRow(int, int, vector<wstring>);
-	void Clear();
-	void FillTable(LPWSTR);
 	void OnColumnClick(LPARAM);
-	wstring GetItem(int, int);
-	void ReadFile(LPWSTR);
+	void FillTable(LPWSTR);
 	void SaveFile(LPWSTR);
+	int CompareListItemsAsc(LPARAM, LPARAM);
+	int CompareListItemsDesc(LPARAM, LPARAM);
 };

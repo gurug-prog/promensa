@@ -20,7 +20,6 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 TableView* tv = nullptr;
 
 LPWSTR ProcessOpenDlg(HWND);
-//void ProcessSaveDlg(HWND);
 LPWSTR ProcessSaveAsDlg(HWND);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -85,7 +84,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	hInst = hInstance;
 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, 600, 500, nullptr, nullptr, hInstance, nullptr);
+		CW_USEDEFAULT, 0, 800, 500, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hWnd)
 	{
@@ -107,7 +106,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		LPNMHDR lpnmhdr = (LPNMHDR)lParam;
 		if (lpnmhdr->idFrom == IDC_LISTVIEW &&
 			lpnmhdr->code == LVN_COLUMNCLICK)
-			//MessageBox(hDlg, L"Column clicked", L"Mesage", 0);
 			tv->OnColumnClick(lParam);
 		break;
 	}

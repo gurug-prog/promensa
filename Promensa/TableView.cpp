@@ -1,23 +1,20 @@
 #include "TableView.h"
 #include "Promensa.h"
+#include <fstream>
 
 
 static TableView* thisPtr = nullptr;
-bool DoubleTryParse(wstring, double*);
-static int CALLBACK CompareListItemsAsc(LPARAM, LPARAM, LPARAM);
-static int CALLBACK CompareListItemsDesc(LPARAM, LPARAM, LPARAM);
+static int CALLBACK CallBackSortAsc(LPARAM, LPARAM);
+static int CALLBACK CallBackSortDesc(LPARAM, LPARAM);
 
 TableView::TableView()
 {
 	this->hWndList = NULL;
-	//this->order = SortState::Unsorted;
-	this->prevColumn = 0;
-	thisPtr = this;
-	this->fileName = NULL;
-	this->order = 0;
 	this->rcl = { };
-	// this->columns = ; how to init vector???
-	// this->rows = ; how to init vector???
+	this->fileName = NULL;
+	this->selectedCol = 0;
+	this->order = SortState::Unsorted;
+	thisPtr = this;
 }
 
 TableView::TableView(HWND hWndParent)
@@ -34,10 +31,9 @@ TableView::TableView(HWND hWndParent)
 		WS_VISIBLE | WS_BORDER | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
 		x, y, listWidth, listHeight,
 		hWndParent, (HMENU)IDC_LISTVIEW, hInst, 0);
-	//this->order = SortState::Unsorted;
-	this->prevColumn = 0;
 	this->fileName = NULL;
-	this->order = 0;
+	this->selectedCol = 0;
+	this->order = SortState::Unsorted;
 	thisPtr = this;
 }
 
@@ -110,10 +106,6 @@ void TableView::ReadFile(LPWSTR fileInput)
 	{
 		auto attibutes = Split(str, L"\t");
 		entities.push_back(attibutes);
-		// TODO something
-		// после заполнения вектора entities
-		// в методе заполнения вектора
-		// auto vector = ReadFile();
 	}
 
 	this->columns = entities[0];
@@ -197,115 +189,53 @@ void TableView::FillTable(LPWSTR fileInput)
 	}
 }
 
-//wstring TableView::GetCell(int row, int col)
-//{
-//	const int maxLength = 256;
-//	WCHAR buffer[maxLength] = L"";
-//
-//	LVITEM lvi;
-//	lvi.mask = LVIF_TEXT;
-//	lvi.iItem = row;
-//	lvi.pszText = buffer;
-//	lvi.iSubItem = col;
-//	lvi.cchTextMax = maxLength;
-//	ListView_GetItem(this->hWndList, &lvi);
-//
-//	return wstring(buffer);
-//}
-//
-//void TableView::NextState()
-//{
-//    switch (this->order)
-//    {
-//    case SortState::Unsorted:
-//        this->order = SortState::Ascending;
-//        break;
-//    case SortState::Ascending:
-//        this->order = SortState::Descending;
-//        break;
-//    case SortState::Descending:
-//        this->order = SortState::Unsorted;
-//        break;
-//    default:
-//        throw new exception("Unknown sorting state.");
-//        break;
-//    }
-//}
-//
+void TableView::HandleSortState(LPARAM lParam)
+{
+	auto pLVInfo = (LPNMLISTVIEW)lParam;
+	auto lParamSort = 1 + pLVInfo->iSubItem;
+	switch (this->order)
+    {
+    case SortState::Unsorted:
+		FillTable(this->fileName);
+		this->order = SortState::Ascending;
+        break;
+    case SortState::Ascending:
+		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortAsc, lParamSort);
+		this->order = SortState::Descending;
+        break;
+    case SortState::Descending:
+		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortDesc, lParamSort);
+		this->order = SortState::Unsorted;
+        break;
+    default:
+		string message = "Unknown sorting state: " + to_string((int)this->order);
+		throw new exception(message.c_str());
+        break;
+    }
+}
+
 
 void TableView::OnColumnClick(LPARAM lParam)
 {
-	// зависит от того поменялся ли столбец
-	// если поменялся то sortState выставляется в 0
 	auto pLVInfo = (LPNMLISTVIEW)lParam;
-	static int nSortColumn = 0;
-	static BOOL bSortAscending = TRUE;
-	LPARAM lParamSort;
+	const int nSortColumn = pLVInfo->iSubItem;
 
-	// get new sort parameters
-	if (pLVInfo->iSubItem == nSortColumn)
-		bSortAscending = !bSortAscending;
-	else
-	{
-		nSortColumn = pLVInfo->iSubItem;
-		bSortAscending = TRUE;
-	}
-
-	// combine sort info into a single value we can send to our sort function
-	lParamSort = 1 + nSortColumn;
-	if (!bSortAscending)
-		lParamSort = -lParamSort;
-
-	int nColumn = abs(lParamSort) - 1;
-	if (this->prevColumn != nColumn)
-	{
-		this->order = 1;
-	}
-	this->prevColumn = nColumn;
+	if (this->selectedCol != nSortColumn) this->order = SortState::Ascending;
+	this->selectedCol = nSortColumn;
 
 	// sort list
-	if (this->order == 0)
-	{
-		// unsorted list
-		//ReadFile(this->fileName);
-		FillTable(this->fileName);
-	}
-	else if (this->order == 1)
-	{
-		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CompareListItemsAsc, lParamSort);
-	}
-	else if (this->order == 2)
-	{
-		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CompareListItemsDesc, lParamSort);
-	}
-	else
-	{
-		string message = "Unknown sorting state: " + to_string(this->order);
-		throw new exception(message.c_str());
-	}
-
-	order = (order + 1) % 3;
+	this->HandleSortState(lParam);
 }
 
-static int CALLBACK CompareListItemsAsc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+int TableView::CompareListItemsAsc(LPARAM lParam1, LPARAM lParam2)
 {
-	BOOL bSortAscending = (lParamSort > 0);
-	int nColumn = abs(lParamSort) - 1;
-
-	//WCHAR itemTxt[128];
-	//ListView_GetItemText(hWndListGlobal, 0, 1, itemTxt, 128);
-	wstring strItem1 = thisPtr->GetItem((int)lParam1, nColumn);
-	wstring strItem2 = thisPtr->GetItem((int)lParam2, nColumn);
-
-	// тут определяем тип по номеру стобца
+	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
+	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
 
 	double numItem1, numItem2;
-	bool isNumberSorting = DoubleTryParse(strItem1, &numItem1)
-		&& DoubleTryParse(strItem2, &numItem2);
+	bool isNumberSorting = this->DoubleTryParse(strItem1, &numItem1)
+		&& this->DoubleTryParse(strItem2, &numItem2);
 
-	//double a1 = stod(s1);
-	//double a2 = stod(s2);
-	//double a3 = a1 + a2;
 	if (isNumberSorting)
 	{
 		if (numItem1 > numItem2) return 1;
@@ -320,25 +250,15 @@ static int CALLBACK CompareListItemsAsc(LPARAM lParam1, LPARAM lParam2, LPARAM l
 	}
 }
 
-static int CALLBACK CompareListItemsDesc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+int TableView::CompareListItemsDesc(LPARAM lParam1, LPARAM lParam2)
 {
-	BOOL bSortAscending = (lParamSort > 0);
-	int nColumn = abs(lParamSort) - 1;
-
-	//WCHAR itemTxt[128];
-	//ListView_GetItemText(hWndListGlobal, 0, 1, itemTxt, 128);
-	wstring strItem1 = thisPtr->GetItem((int)lParam1, nColumn);
-	wstring strItem2 = thisPtr->GetItem((int)lParam2, nColumn);
-
-	// тут определяем тип по номеру стобца
+	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
+	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
 
 	double numItem1, numItem2;
-	bool isNumberSorting = DoubleTryParse(strItem1, &numItem1)
-		&& DoubleTryParse(strItem2, &numItem2);
+	bool isNumberSorting = this->DoubleTryParse(strItem1, &numItem1)
+		&& this->DoubleTryParse(strItem2, &numItem2);
 
-	//double a1 = stod(s1);
-	//double a2 = stod(s2);
-	//double a3 = a1 + a2;
 	if (isNumberSorting)
 	{
 		if (numItem1 < numItem2) return 1;
@@ -353,7 +273,7 @@ static int CALLBACK CompareListItemsDesc(LPARAM lParam1, LPARAM lParam2, LPARAM 
 	}
 }
 
-wstring TableView::GetItem(int row, int col)
+wstring TableView::GetCell(int row, int col)
 {
 	const int maxLength = 256;
 	WCHAR buffer[maxLength] = L"";
@@ -390,7 +310,6 @@ vector<wstring> TableView::GetEntitiesStrings()
 	}
 	strEntities.push_back(strCols);
 
-
 	for (int iRow = 0; iRow < rowsCount; ++iRow)
 	{
 		wstring outStr;
@@ -398,10 +317,10 @@ vector<wstring> TableView::GetEntitiesStrings()
 		{
 			if (iCol == columns.size() - 1)
 			{
-				outStr = outStr + this->GetItem(iRow, iCol) + eol;
+				outStr = outStr + this->GetCell(iRow, iCol) + eol;
 				break;
 			}
-			outStr = outStr + this->GetItem(iRow, iCol) + delim;
+			outStr = outStr + this->GetCell(iRow, iCol) + delim;
 		}
 		strEntities.push_back(outStr);
 	}
@@ -409,7 +328,7 @@ vector<wstring> TableView::GetEntitiesStrings()
 	return strEntities;
 }
 
-bool DoubleTryParse(wstring str, double* out)
+bool TableView::DoubleTryParse(wstring str, double* out)
 {
 	try
 	{
@@ -420,4 +339,14 @@ bool DoubleTryParse(wstring str, double* out)
 	{
 		return false;
 	}
+}
+
+static int CALLBACK CallBackSortAsc(LPARAM lParam1, LPARAM lParam2)
+{
+	if (thisPtr) return thisPtr->CompareListItemsAsc(lParam1, lParam2);
+}
+
+static int CALLBACK CallBackSortDesc(LPARAM lParam1, LPARAM lParam2)
+{
+	if (thisPtr) return thisPtr->CompareListItemsDesc(lParam1, lParam2);
 }

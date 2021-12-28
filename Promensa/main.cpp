@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "Promensa.h"
 #include "TableView.h"
+#include "DataProcessor.h"
 #include "commdlg.h"
 
 #define MAX_LOADSTRING 100
@@ -121,19 +122,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 		case IDM_FILE_OPEN:
 		{
+			//tv->OnFileOpen();
 			auto fileName = ProcessOpenDlg(hWnd);
 			if (fileName) tv->FillTable(fileName);
 			break;
 		}
 		case IDM_FILE_SAVE:
 		{
-			tv->SaveFile(nullptr);
+			if (tv) tv->OnFileSave();
 			break;
 		}
 		case IDM_FILE_SAVEAS:
 		{
-			auto fileName = ProcessSaveAsDlg(hWnd);
-			if (fileName) tv->SaveFile(fileName);
+			//tv->OnFileSaveAs();
+			//auto fileName = ProcessSaveAsDlg(hWnd);
+			//if (fileName) DataProcessor::SaveFile(fileName);
 			break;
 		}
 		case IDM_ABOUT:

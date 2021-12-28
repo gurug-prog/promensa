@@ -1,17 +1,17 @@
 #include "TableView.h"
 #include "Promensa.h"
 #include <fstream>
+#include "DataProcessor.h"
 
 
 static TableView* thisPtr = nullptr;
-static int CALLBACK CallBackSortAsc(LPARAM, LPARAM);
-static int CALLBACK CallBackSortDesc(LPARAM, LPARAM);
+static int CALLBACK CallBackSortAsc(LPARAM, LPARAM, LPARAM);
+static int CALLBACK CallBackSortDesc(LPARAM, LPARAM, LPARAM);
 
 TableView::TableView()
 {
-	this->hWndList = NULL;
 	this->rcl = { };
-	this->fileName = NULL;
+	this->hWndList = NULL;
 	this->selectedCol = 0;
 	this->order = SortState::Unsorted;
 	thisPtr = this;
@@ -31,7 +31,6 @@ TableView::TableView(HWND hWndParent)
 		WS_VISIBLE | WS_BORDER | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
 		x, y, listWidth, listHeight,
 		hWndParent, (HMENU)IDC_LISTVIEW, hInst, 0);
-	this->fileName = NULL;
 	this->selectedCol = 0;
 	this->order = SortState::Unsorted;
 	thisPtr = this;
@@ -76,87 +75,20 @@ void TableView::AddRow(int colsCount, int rowIndex, vector<wstring> row)
 	}
 }
 
-vector<wstring> TableView::Split(wstring str, wstring delim)
+wstring TableView::GetCell(int row, int col)
 {
-	vector<wstring> splittedValues;
-	size_t pos = 0;
-	wstring token;
-	while (pos != wstring::npos)
-	{
-		pos = str.find(delim);
-		token = str.substr(0, pos);
-		splittedValues.push_back(token);
-		str.erase(0, pos + delim.length());
-	}
+	const int maxLength = 256;
+	WCHAR buffer[maxLength] = L"";
 
-	return splittedValues;
-}
+	LVITEM lvi;
+	lvi.mask = LVIF_TEXT;
+	lvi.iItem = row;
+	lvi.pszText = buffer;
+	lvi.iSubItem = col;
+	lvi.cchTextMax = maxLength;
+	ListView_GetItem(this->hWndList, &lvi);
 
-void TableView::ReadFile(LPWSTR fileInput)
-{
-	if (fileInput != this->fileName) delete this->fileName;
-	this->fileName = fileInput;
-	columns.clear();
-	rows.clear();
-
-	vector<vector<wstring>> entities = { };
-	wstring str;
-	wifstream file(fileInput);
-	while (getline(file, str))
-	{
-		auto attibutes = Split(str, L"\t");
-		entities.push_back(attibutes);
-	}
-
-	this->columns = entities[0];
-	entities.erase(entities.begin());
-	this->rows = entities;
-}
-
-void TableView::SaveFile(LPWSTR fileSave)
-{
-	if (!fileSave) fileSave = this->fileName;
-	else this->fileName = fileSave;
-
-	wofstream outfile;
-	outfile.open(fileSave, ios_base::out);
-
-	//wstring outStr;
-	//wstring delim = L"\t";
-	//wstring eol = L"\n";
-
-	auto entitiesStrs = GetEntitiesStrings();
-	for (int i = 0; i < entitiesStrs.size(); ++i)
-		outfile << entitiesStrs[i];
-	//// write columns
-	//for (int i = 0; i < columns.size(); ++i)
-	//{
-	//    if (i == columns.size() - 1)
-	//    {
-	//        outStr = outStr + columns[i] + eol;
-	//        break;
-	//    }
-	//    outStr = outStr + columns[i] + delim;
-	//}
-	//outfile << outStr;
-	//outStr = L"";
-
-	//// write rows
-	//for (int i = 0; i < rows.size(); ++i)
-	//{
-	//    auto row = rows[i];
-	//    for (int j = 0; j < row.size(); ++j)
-	//    {
-	//        if (j == row.size() - 1)
-	//        {
-	//            outStr = outStr + row[j] + eol;
-	//            break;
-	//        }
-	//        outStr = outStr + row[j] + delim;
-	//    }
-	//    outfile << outStr;
-	//    outStr = L"";
-	//}
+	return wstring(buffer);
 }
 
 void TableView::Clear()
@@ -170,8 +102,14 @@ void TableView::Clear()
 
 void TableView::FillTable(LPWSTR fileInput)
 {
-	this->ReadFile(fileInput);
+	columns.clear();
+	rows.clear();
 	this->Clear();
+	auto entities = DataProcessor::ReadFile(fileInput);
+
+	this->columns = entities[0];
+	entities.erase(entities.begin());
+	this->rows = entities;
 
 	// insert columns
 	for (int index = 0; index < this->columns.size(); ++index)
@@ -189,31 +127,51 @@ void TableView::FillTable(LPWSTR fileInput)
 	}
 }
 
-void TableView::HandleSortState(LPARAM lParam)
-{
-	auto pLVInfo = (LPNMLISTVIEW)lParam;
-	auto lParamSort = 1 + pLVInfo->iSubItem;
-	switch (this->order)
-    {
-    case SortState::Unsorted:
-		FillTable(this->fileName);
-		this->order = SortState::Ascending;
-        break;
-    case SortState::Ascending:
-		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortAsc, lParamSort);
-		this->order = SortState::Descending;
-        break;
-    case SortState::Descending:
-		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortDesc, lParamSort);
-		this->order = SortState::Unsorted;
-        break;
-    default:
-		string message = "Unknown sorting state: " + to_string((int)this->order);
-		throw new exception(message.c_str());
-        break;
-    }
-}
-
+//void TableView::SaveFile(LPWSTR fileSave)
+//{
+//	if (!fileSave) fileSave = DataProcessor::fileName;
+//	else DataProcessor::fileName = fileSave;
+//
+//	wofstream outfile;
+//	outfile.open(fileSave, ios_base::out);
+//
+//	//wstring outStr;
+//	//wstring delim = L"\t";
+//	//wstring eol = L"\n";
+//
+//	auto entitiesStrs = GetEntitiesStrings();
+//	for (int i = 0; i < entitiesStrs.size(); ++i)
+//		outfile << entitiesStrs[i];
+//	//// write columns
+//	//for (int i = 0; i < columns.size(); ++i)
+//	//{
+//	//    if (i == columns.size() - 1)
+//	//    {
+//	//        outStr = outStr + columns[i] + eol;
+//	//        break;
+//	//    }
+//	//    outStr = outStr + columns[i] + delim;
+//	//}
+//	//outfile << outStr;
+//	//outStr = L"";
+//
+//	//// write rows
+//	//for (int i = 0; i < rows.size(); ++i)
+//	//{
+//	//    auto row = rows[i];
+//	//    for (int j = 0; j < row.size(); ++j)
+//	//    {
+//	//        if (j == row.size() - 1)
+//	//        {
+//	//            outStr = outStr + row[j] + eol;
+//	//            break;
+//	//        }
+//	//        outStr = outStr + row[j] + delim;
+//	//    }
+//	//    outfile << outStr;
+//	//    outStr = L"";
+//	//}
+//}
 
 void TableView::OnColumnClick(LPARAM lParam)
 {
@@ -227,66 +185,36 @@ void TableView::OnColumnClick(LPARAM lParam)
 	this->HandleSortState(lParam);
 }
 
-int TableView::CompareListItemsAsc(LPARAM lParam1, LPARAM lParam2)
+void TableView::OnFileSave()
 {
-	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
-	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
-
-	double numItem1, numItem2;
-	bool isNumberSorting = this->DoubleTryParse(strItem1, &numItem1)
-		&& this->DoubleTryParse(strItem2, &numItem2);
-
-	if (isNumberSorting)
-	{
-		if (numItem1 > numItem2) return 1;
-		else if (numItem1 < numItem2) return -1;
-		else return 0;
-	}
-	else
-	{
-		if (strItem1 > strItem2) return 1;
-		else if (strItem1 < strItem2) return -1;
-		else return 0;
-	}
+	auto lines = this->GetEntitiesStrings();
+	DataProcessor::SaveFile(nullptr, lines);
 }
 
-int TableView::CompareListItemsDesc(LPARAM lParam1, LPARAM lParam2)
+void TableView::HandleSortState(LPARAM lParam)
 {
-	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
-	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
+	auto pLVInfo = (LPNMLISTVIEW)lParam;
+	auto lParamSort = 1 + pLVInfo->iSubItem;
 
-	double numItem1, numItem2;
-	bool isNumberSorting = this->DoubleTryParse(strItem1, &numItem1)
-		&& this->DoubleTryParse(strItem2, &numItem2);
-
-	if (isNumberSorting)
+	switch (this->order)
 	{
-		if (numItem1 < numItem2) return 1;
-		else if (numItem1 > numItem2) return -1;
-		else return 0;
+	case SortState::Unsorted:
+		FillTable(DataProcessor::fileName);
+		this->order = SortState::Ascending;
+		break;
+	case SortState::Ascending:
+		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortAsc, lParamSort);
+		this->order = SortState::Descending;
+		break;
+	case SortState::Descending:
+		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortDesc, lParamSort);
+		this->order = SortState::Unsorted;
+		break;
+	default:
+		string message = "Unknown sorting state: " + to_string((int)this->order);
+		throw new exception(message.c_str());
+		break;
 	}
-	else
-	{
-		if (strItem1 < strItem2) return 1;
-		else if (strItem1 > strItem2) return -1;
-		else return 0;
-	}
-}
-
-wstring TableView::GetCell(int row, int col)
-{
-	const int maxLength = 256;
-	WCHAR buffer[maxLength] = L"";
-
-	LVITEM lvi;
-	lvi.mask = LVIF_TEXT;
-	lvi.iItem = row;
-	lvi.pszText = buffer;
-	lvi.iSubItem = col;
-	lvi.cchTextMax = maxLength;
-	ListView_GetItem(this->hWndList, &lvi);
-
-	return wstring(buffer);
 }
 
 vector<wstring> TableView::GetEntitiesStrings()
@@ -328,25 +256,59 @@ vector<wstring> TableView::GetEntitiesStrings()
 	return strEntities;
 }
 
-bool TableView::DoubleTryParse(wstring str, double* out)
+int TableView::CompareListItemsAsc(LPARAM lParam1, LPARAM lParam2)
 {
-	try
+	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
+	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
+
+	double numItem1, numItem2;
+	bool isNumberSorting = DataProcessor::DoubleTryParse(strItem1, &numItem1)
+		&& DataProcessor::DoubleTryParse(strItem2, &numItem2);
+
+	if (isNumberSorting)
 	{
-		*out = stod(str);
-		return true;
+		if (numItem1 > numItem2) return 1;
+		else if (numItem1 < numItem2) return -1;
+		else return 0;
 	}
-	catch (const std::exception&)
+	else
 	{
-		return false;
+		if (strItem1 > strItem2) return 1;
+		else if (strItem1 < strItem2) return -1;
+		else return 0;
 	}
 }
 
-static int CALLBACK CallBackSortAsc(LPARAM lParam1, LPARAM lParam2)
+int TableView::CompareListItemsDesc(LPARAM lParam1, LPARAM lParam2)
+{
+	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
+	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
+
+	double numItem1, numItem2;
+	bool isNumberSorting = DataProcessor::DoubleTryParse(strItem1, &numItem1)
+		&& DataProcessor::DoubleTryParse(strItem2, &numItem2);
+
+	if (isNumberSorting)
+	{
+		if (numItem1 < numItem2) return 1;
+		else if (numItem1 > numItem2) return -1;
+		else return 0;
+	}
+	else
+	{
+		if (strItem1 < strItem2) return 1;
+		else if (strItem1 > strItem2) return -1;
+		else return 0;
+	}
+}
+
+static int CALLBACK CallBackSortAsc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	if (thisPtr) return thisPtr->CompareListItemsAsc(lParam1, lParam2);
 }
 
-static int CALLBACK CallBackSortDesc(LPARAM lParam1, LPARAM lParam2)
+static int CALLBACK CallBackSortDesc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	if (thisPtr) return thisPtr->CompareListItemsDesc(lParam1, lParam2);
 }
+

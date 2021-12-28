@@ -139,6 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DataProcessor.h" />
+    <ClInclude Include="DialogInvoker.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Promensa.h" />
     <ClInclude Include="Resource.h" />
@@ -147,6 +149,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DataProcessor.cpp" />
+    <ClCompile Include="DialogInvoker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="TableView.cpp" />
   </ItemGroup>

@@ -13,6 +13,7 @@ private:
 public:
 	static LPWSTR fileName;
 	static vector<vector<wstring>> ReadFile(LPWSTR);
+	static void SaveFile(LPWSTR, vector<wstring>);
 	static vector<wstring> Split(wstring, wstring);
 	static bool DoubleTryParse(wstring, double*);
 };

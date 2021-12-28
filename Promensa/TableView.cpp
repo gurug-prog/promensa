@@ -127,51 +127,51 @@ void TableView::FillTable(LPWSTR fileInput)
 	}
 }
 
-void TableView::SaveFile(LPWSTR fileSave)
-{
-	if (!fileSave) fileSave = DataProcessor::fileName;
-	else DataProcessor::fileName = fileSave;
-
-	wofstream outfile;
-	outfile.open(fileSave, ios_base::out);
-
-	//wstring outStr;
-	//wstring delim = L"\t";
-	//wstring eol = L"\n";
-
-	auto entitiesStrs = GetEntitiesStrings();
-	for (int i = 0; i < entitiesStrs.size(); ++i)
-		outfile << entitiesStrs[i];
-	//// write columns
-	//for (int i = 0; i < columns.size(); ++i)
-	//{
-	//    if (i == columns.size() - 1)
-	//    {
-	//        outStr = outStr + columns[i] + eol;
-	//        break;
-	//    }
-	//    outStr = outStr + columns[i] + delim;
-	//}
-	//outfile << outStr;
-	//outStr = L"";
-
-	//// write rows
-	//for (int i = 0; i < rows.size(); ++i)
-	//{
-	//    auto row = rows[i];
-	//    for (int j = 0; j < row.size(); ++j)
-	//    {
-	//        if (j == row.size() - 1)
-	//        {
-	//            outStr = outStr + row[j] + eol;
-	//            break;
-	//        }
-	//        outStr = outStr + row[j] + delim;
-	//    }
-	//    outfile << outStr;
-	//    outStr = L"";
-	//}
-}
+//void TableView::SaveFile(LPWSTR fileSave)
+//{
+//	if (!fileSave) fileSave = DataProcessor::fileName;
+//	else DataProcessor::fileName = fileSave;
+//
+//	wofstream outfile;
+//	outfile.open(fileSave, ios_base::out);
+//
+//	//wstring outStr;
+//	//wstring delim = L"\t";
+//	//wstring eol = L"\n";
+//
+//	auto entitiesStrs = GetEntitiesStrings();
+//	for (int i = 0; i < entitiesStrs.size(); ++i)
+//		outfile << entitiesStrs[i];
+//	//// write columns
+//	//for (int i = 0; i < columns.size(); ++i)
+//	//{
+//	//    if (i == columns.size() - 1)
+//	//    {
+//	//        outStr = outStr + columns[i] + eol;
+//	//        break;
+//	//    }
+//	//    outStr = outStr + columns[i] + delim;
+//	//}
+//	//outfile << outStr;
+//	//outStr = L"";
+//
+//	//// write rows
+//	//for (int i = 0; i < rows.size(); ++i)
+//	//{
+//	//    auto row = rows[i];
+//	//    for (int j = 0; j < row.size(); ++j)
+//	//    {
+//	//        if (j == row.size() - 1)
+//	//        {
+//	//            outStr = outStr + row[j] + eol;
+//	//            break;
+//	//        }
+//	//        outStr = outStr + row[j] + delim;
+//	//    }
+//	//    outfile << outStr;
+//	//    outStr = L"";
+//	//}
+//}
 
 void TableView::OnColumnClick(LPARAM lParam)
 {
@@ -183,6 +183,12 @@ void TableView::OnColumnClick(LPARAM lParam)
 
 	// sort list
 	this->HandleSortState(lParam);
+}
+
+void TableView::OnFileSave()
+{
+	auto lines = this->GetEntitiesStrings();
+	DataProcessor::SaveFile(nullptr, lines);
 }
 
 void TableView::HandleSortState(LPARAM lParam)
@@ -305,3 +311,4 @@ static int CALLBACK CallBackSortDesc(LPARAM lParam1, LPARAM lParam2, LPARAM lPar
 {
 	if (thisPtr) return thisPtr->CompareListItemsDesc(lParam1, lParam2);
 }
+

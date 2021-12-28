@@ -23,18 +23,15 @@ private:
 	wstring GetCell(int, int);
 	void Clear();
 	void HandleSortState(LPARAM);
-
-	// DataProcessor
 	vector<wstring> GetEntitiesStrings();
 public:
 	TableView();
 	TableView(HWND);
 	~TableView();
 	void OnColumnClick(LPARAM);
+	void OnFileSave();
 	void FillTable(LPWSTR);
 
-	// DataProcessor
-	void SaveFile(LPWSTR);
 	// TableProcessor
 	int CompareListItemsAsc(LPARAM, LPARAM);
 	int CompareListItemsDesc(LPARAM, LPARAM);

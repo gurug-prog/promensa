@@ -22,6 +22,18 @@ vector<vector<wstring>> DataProcessor::ReadFile(LPWSTR fileInput)
 	return entities;
 }
 
+void DataProcessor::SaveFile(LPWSTR fileSave, vector<wstring> lines)
+{
+	if (!fileSave) fileSave = DataProcessor::fileName;
+	else DataProcessor::fileName = fileSave;
+
+	wofstream outfile;
+	outfile.open(fileSave, ios_base::out);
+
+	for (int i = 0; i < lines.size(); ++i)
+		outfile << lines[i];
+}
+
 vector<wstring> DataProcessor::Split(wstring str, wstring delim)
 {
 	vector<wstring> splittedValues;
@@ -50,4 +62,3 @@ bool DataProcessor::DoubleTryParse(wstring str, double* out)
 		return false;
 	}
 }
-

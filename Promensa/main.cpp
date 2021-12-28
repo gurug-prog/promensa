@@ -20,9 +20,6 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 TableView* tv = nullptr;
 
-LPWSTR ProcessOpenDlg(HWND);
-LPWSTR ProcessSaveAsDlg(HWND);
-
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPWSTR    lpCmdLine,
@@ -111,34 +108,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	case WM_CREATE:
-	{
 		tv = new TableView(hWnd);
 		break;
-	}
 	case WM_COMMAND:
 	{
 		int wmId = LOWORD(wParam);
 		switch (wmId)
 		{
 		case IDM_FILE_OPEN:
-		{
-			//tv->OnFileOpen();
-			auto fileName = ProcessOpenDlg(hWnd);
-			if (fileName) tv->FillTable(fileName);
+			if (tv) tv->OnFileOpen(hWnd);
 			break;
-		}
 		case IDM_FILE_SAVE:
-		{
 			if (tv) tv->OnFileSave();
 			break;
-		}
 		case IDM_FILE_SAVEAS:
-		{
-			//tv->OnFileSaveAs();
-			//auto fileName = ProcessSaveAsDlg(hWnd);
-			//if (fileName) DataProcessor::SaveFile(fileName);
+			if (tv) tv->OnFileSaveAs(hWnd);
 			break;
-		}
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
@@ -184,42 +169,4 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	return (INT_PTR)FALSE;
-}
-
-LPWSTR ProcessOpenDlg(HWND hWnd)
-{
-	LPWSTR fileName = new WCHAR[256];
-
-	OPENFILENAME ofn;
-	fileName[0] = 0;
-	memset(&ofn, 0, sizeof(OPENFILENAME));
-
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = L"TSV-files	(*.tsv)\0*.tsv\0\0";
-	ofn.lpstrDefExt = L"tsv";
-	ofn.lpstrFile = fileName;
-	ofn.nMaxFile = 256;
-
-	if (GetOpenFileName(&ofn)) return fileName;
-	else return NULL;
-}
-
-LPWSTR ProcessSaveAsDlg(HWND hWnd)
-{
-	LPWSTR fileName = new WCHAR[256];
-
-	OPENFILENAME ofn;
-	fileName[0] = 0;
-	memset(&ofn, 0, sizeof(OPENFILENAME));
-
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = L"TSV-files	(*.tsv)\0*.tsv\0\0";
-	ofn.lpstrDefExt = L"tsv";
-	ofn.lpstrFile = fileName;
-	ofn.nMaxFile = 256;
-
-	if (GetSaveFileName(&ofn)) return fileName;
-	else return NULL;
 }

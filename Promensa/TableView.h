@@ -21,6 +21,7 @@ private:
 	void AddColumn(int, wstring, int);
 	void AddRow(int, int, vector<wstring>);
 	wstring GetCell(int, int);
+	void FillTable(LPWSTR);
 	void Clear();
 	void HandleSortState(LPARAM);
 	vector<wstring> GetEntitiesStrings();
@@ -29,10 +30,9 @@ public:
 	TableView(HWND);
 	~TableView();
 	void OnColumnClick(LPARAM);
+	void OnFileOpen(HWND);
 	void OnFileSave();
-	void FillTable(LPWSTR);
-
-	// TableProcessor
+	void OnFileSaveAs(HWND);
 	int CompareListItemsAsc(LPARAM, LPARAM);
 	int CompareListItemsDesc(LPARAM, LPARAM);
 };

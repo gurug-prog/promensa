@@ -5,6 +5,7 @@
 
 class DialogInvoker
 {
+public:
 	static LPWSTR ProcessOpenDlg(HWND);
 	static LPWSTR ProcessSaveAsDlg(HWND);
 

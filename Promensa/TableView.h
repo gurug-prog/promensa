@@ -25,9 +25,6 @@ private:
 	void HandleSortState(LPARAM);
 
 	// DataProcessor
-	void ReadFile(LPWSTR);
-	bool DoubleTryParse(wstring, double*);
-	vector<wstring> Split(wstring, wstring);
 	vector<wstring> GetEntitiesStrings();
 public:
 	TableView();
@@ -38,7 +35,7 @@ public:
 
 	// DataProcessor
 	void SaveFile(LPWSTR);
-	// Unknown class
+	// TableProcessor
 	int CompareListItemsAsc(LPARAM, LPARAM);
 	int CompareListItemsDesc(LPARAM, LPARAM);
 };

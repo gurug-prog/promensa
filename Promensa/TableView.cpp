@@ -75,44 +75,56 @@ void TableView::AddRow(int colsCount, int rowIndex, vector<wstring> row)
 	}
 }
 
-vector<wstring> TableView::Split(wstring str, wstring delim)
+wstring TableView::GetCell(int row, int col)
 {
-	vector<wstring> splittedValues;
-	size_t pos = 0;
-	wstring token;
-	while (pos != wstring::npos)
-	{
-		pos = str.find(delim);
-		token = str.substr(0, pos);
-		splittedValues.push_back(token);
-		str.erase(0, pos + delim.length());
-	}
+	const int maxLength = 256;
+	WCHAR buffer[maxLength] = L"";
 
-	return splittedValues;
+	LVITEM lvi;
+	lvi.mask = LVIF_TEXT;
+	lvi.iItem = row;
+	lvi.pszText = buffer;
+	lvi.iSubItem = col;
+	lvi.cchTextMax = maxLength;
+	ListView_GetItem(this->hWndList, &lvi);
+
+	return wstring(buffer);
 }
 
-void TableView::ReadFile(LPWSTR fileInput)
+void TableView::Clear()
 {
-	// костыль
-	// {
-	if (fileInput != DataProcessor::fileName) delete DataProcessor::fileName;
-	DataProcessor::fileName = fileInput;
-	// }
+	ListView_DeleteAllItems(this->hWndList);
+	HWND hWndHeader = (HWND)::SendMessage(this->hWndList, LVM_GETHEADER, 0, 0);
+	int columnCount = (int)::SendMessage(hWndHeader, HDM_GETITEMCOUNT, 0, 0L);
+	for (int iCol = columnCount - 1; iCol >= 0; --iCol)
+		ListView_DeleteColumn(this->hWndList, iCol);
+}
+
+void TableView::FillTable(LPWSTR fileInput)
+{
 	columns.clear();
 	rows.clear();
-
-	vector<vector<wstring>> entities = { };
-	wstring str;
-	wifstream file(fileInput);
-	while (getline(file, str))
-	{
-		auto attibutes = Split(str, L"\t");
-		entities.push_back(attibutes);
-	}
+	this->Clear();
+	auto entities = DataProcessor::ReadFile(fileInput);
 
 	this->columns = entities[0];
 	entities.erase(entities.begin());
 	this->rows = entities;
+
+	// insert columns
+	for (int index = 0; index < this->columns.size(); ++index)
+	{
+		wstring textStr = this->columns[index];
+		int width = (rcl.right - rcl.left) * 0.1;
+		this->AddColumn(index, textStr, width);
+	}
+
+	// insert rows
+	for (int rowIndex = 0; rowIndex < this->rows.size(); ++rowIndex)
+	{
+		auto row = this->rows[rowIndex];
+		this->AddRow(this->columns.size(), rowIndex, row);
+	}
 }
 
 void TableView::SaveFile(LPWSTR fileSave)
@@ -161,34 +173,16 @@ void TableView::SaveFile(LPWSTR fileSave)
 	//}
 }
 
-void TableView::Clear()
+void TableView::OnColumnClick(LPARAM lParam)
 {
-	ListView_DeleteAllItems(this->hWndList);
-	HWND hWndHeader = (HWND)::SendMessage(this->hWndList, LVM_GETHEADER, 0, 0);
-	int columnCount = (int)::SendMessage(hWndHeader, HDM_GETITEMCOUNT, 0, 0L);
-	for (int iCol = columnCount - 1; iCol >= 0; --iCol)
-		ListView_DeleteColumn(this->hWndList, iCol);
-}
+	auto pLVInfo = (LPNMLISTVIEW)lParam;
+	const int nSortColumn = pLVInfo->iSubItem;
 
-void TableView::FillTable(LPWSTR fileInput)
-{
-	this->ReadFile(fileInput);
-	this->Clear();
+	if (this->selectedCol != nSortColumn) this->order = SortState::Ascending;
+	this->selectedCol = nSortColumn;
 
-	// insert columns
-	for (int index = 0; index < this->columns.size(); ++index)
-	{
-		wstring textStr = this->columns[index];
-		int width = (rcl.right - rcl.left) * 0.1;
-		this->AddColumn(index, textStr, width);
-	}
-
-	// insert rows
-	for (int rowIndex = 0; rowIndex < this->rows.size(); ++rowIndex)
-	{
-		auto row = this->rows[rowIndex];
-		this->AddRow(this->columns.size(), rowIndex, row);
-	}
+	// sort list
+	this->HandleSortState(lParam);
 }
 
 void TableView::HandleSortState(LPARAM lParam)
@@ -215,81 +209,6 @@ void TableView::HandleSortState(LPARAM lParam)
 		throw new exception(message.c_str());
 		break;
 	}
-}
-
-
-void TableView::OnColumnClick(LPARAM lParam)
-{
-	auto pLVInfo = (LPNMLISTVIEW)lParam;
-	const int nSortColumn = pLVInfo->iSubItem;
-
-	if (this->selectedCol != nSortColumn) this->order = SortState::Ascending;
-	this->selectedCol = nSortColumn;
-
-	// sort list
-	this->HandleSortState(lParam);
-}
-
-int TableView::CompareListItemsAsc(LPARAM lParam1, LPARAM lParam2)
-{
-	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
-	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
-
-	double numItem1, numItem2;
-	bool isNumberSorting = this->DoubleTryParse(strItem1, &numItem1)
-		&& this->DoubleTryParse(strItem2, &numItem2);
-
-	if (isNumberSorting)
-	{
-		if (numItem1 > numItem2) return 1;
-		else if (numItem1 < numItem2) return -1;
-		else return 0;
-	}
-	else
-	{
-		if (strItem1 > strItem2) return 1;
-		else if (strItem1 < strItem2) return -1;
-		else return 0;
-	}
-}
-
-int TableView::CompareListItemsDesc(LPARAM lParam1, LPARAM lParam2)
-{
-	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
-	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
-
-	double numItem1, numItem2;
-	bool isNumberSorting = this->DoubleTryParse(strItem1, &numItem1)
-		&& this->DoubleTryParse(strItem2, &numItem2);
-
-	if (isNumberSorting)
-	{
-		if (numItem1 < numItem2) return 1;
-		else if (numItem1 > numItem2) return -1;
-		else return 0;
-	}
-	else
-	{
-		if (strItem1 < strItem2) return 1;
-		else if (strItem1 > strItem2) return -1;
-		else return 0;
-	}
-}
-
-wstring TableView::GetCell(int row, int col)
-{
-	const int maxLength = 256;
-	WCHAR buffer[maxLength] = L"";
-
-	LVITEM lvi;
-	lvi.mask = LVIF_TEXT;
-	lvi.iItem = row;
-	lvi.pszText = buffer;
-	lvi.iSubItem = col;
-	lvi.cchTextMax = maxLength;
-	ListView_GetItem(this->hWndList, &lvi);
-
-	return wstring(buffer);
 }
 
 vector<wstring> TableView::GetEntitiesStrings()
@@ -331,16 +250,49 @@ vector<wstring> TableView::GetEntitiesStrings()
 	return strEntities;
 }
 
-bool TableView::DoubleTryParse(wstring str, double* out)
+int TableView::CompareListItemsAsc(LPARAM lParam1, LPARAM lParam2)
 {
-	try
+	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
+	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
+
+	double numItem1, numItem2;
+	bool isNumberSorting = DataProcessor::DoubleTryParse(strItem1, &numItem1)
+		&& DataProcessor::DoubleTryParse(strItem2, &numItem2);
+
+	if (isNumberSorting)
 	{
-		*out = stod(str);
-		return true;
+		if (numItem1 > numItem2) return 1;
+		else if (numItem1 < numItem2) return -1;
+		else return 0;
 	}
-	catch (const std::exception&)
+	else
 	{
-		return false;
+		if (strItem1 > strItem2) return 1;
+		else if (strItem1 < strItem2) return -1;
+		else return 0;
+	}
+}
+
+int TableView::CompareListItemsDesc(LPARAM lParam1, LPARAM lParam2)
+{
+	wstring strItem1 = this->GetCell((int)lParam1, this->selectedCol);
+	wstring strItem2 = this->GetCell((int)lParam2, this->selectedCol);
+
+	double numItem1, numItem2;
+	bool isNumberSorting = DataProcessor::DoubleTryParse(strItem1, &numItem1)
+		&& DataProcessor::DoubleTryParse(strItem2, &numItem2);
+
+	if (isNumberSorting)
+	{
+		if (numItem1 < numItem2) return 1;
+		else if (numItem1 > numItem2) return -1;
+		else return 0;
+	}
+	else
+	{
+		if (strItem1 < strItem2) return 1;
+		else if (strItem1 > strItem2) return -1;
+		else return 0;
 	}
 }
 

@@ -5,7 +5,7 @@
 #include "Promensa.h"
 #include "TableView.h"
 #include "DataProcessor.h"
-#include "commdlg.h"
+#include "DialogInvoker.h"
 
 #define MAX_LOADSTRING 100
 

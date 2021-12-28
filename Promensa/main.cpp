@@ -81,8 +81,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	hInst = hInstance;
 
+	int nWidth = 800;
+	int nHeight = 500;
+
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, 800, 500, nullptr, nullptr, hInstance, nullptr);
+		CW_USEDEFAULT, 0, nWidth, nHeight, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hWnd)
 	{
@@ -109,6 +112,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_CREATE:
 		tv = new TableView(hWnd);
+		break;
+	case WM_SIZE:
+		tv->OnSize(hWnd);
 		break;
 	case WM_COMMAND:
 	{

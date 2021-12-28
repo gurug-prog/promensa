@@ -30,6 +30,7 @@ public:
 	TableView(HWND);
 	~TableView();
 	void OnColumnClick(LPARAM);
+	void OnSize(HWND);
 	void OnFileOpen(HWND);
 	void OnFileSave();
 	void OnFileSaveAs(HWND);

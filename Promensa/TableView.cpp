@@ -139,6 +139,16 @@ void TableView::OnColumnClick(LPARAM lParam)
 	this->HandleSortState(lParam);
 }
 
+void TableView::OnSize(HWND hWnd)
+{
+	RECT rc;
+	if (this->hWndList)
+	{
+		GetClientRect(hWnd, &rc);
+		MoveWindow(this->hWndList, 0, 0, rc.right - rc.left, rc.bottom - rc.top, FALSE);
+	}
+}
+
 void TableView::OnFileOpen(HWND hWnd)
 {
 	auto fileName = DialogInvoker::ProcessOpenDlg(hWnd);

@@ -1,17 +1,17 @@
 #include "TableView.h"
 #include "Promensa.h"
 #include <fstream>
+#include "DataProcessor.h"
 
 
 static TableView* thisPtr = nullptr;
-static int CALLBACK CallBackSortAsc(LPARAM, LPARAM);
-static int CALLBACK CallBackSortDesc(LPARAM, LPARAM);
+static int CALLBACK CallBackSortAsc(LPARAM, LPARAM, LPARAM);
+static int CALLBACK CallBackSortDesc(LPARAM, LPARAM, LPARAM);
 
 TableView::TableView()
 {
-	this->hWndList = NULL;
 	this->rcl = { };
-	this->fileName = NULL;
+	this->hWndList = NULL;
 	this->selectedCol = 0;
 	this->order = SortState::Unsorted;
 	thisPtr = this;
@@ -31,7 +31,6 @@ TableView::TableView(HWND hWndParent)
 		WS_VISIBLE | WS_BORDER | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
 		x, y, listWidth, listHeight,
 		hWndParent, (HMENU)IDC_LISTVIEW, hInst, 0);
-	this->fileName = NULL;
 	this->selectedCol = 0;
 	this->order = SortState::Unsorted;
 	thisPtr = this;
@@ -94,8 +93,11 @@ vector<wstring> TableView::Split(wstring str, wstring delim)
 
 void TableView::ReadFile(LPWSTR fileInput)
 {
-	if (fileInput != this->fileName) delete this->fileName;
-	this->fileName = fileInput;
+	// костыль
+	// {
+	if (fileInput != DataProcessor::fileName) delete DataProcessor::fileName;
+	DataProcessor::fileName = fileInput;
+	// }
 	columns.clear();
 	rows.clear();
 
@@ -115,8 +117,8 @@ void TableView::ReadFile(LPWSTR fileInput)
 
 void TableView::SaveFile(LPWSTR fileSave)
 {
-	if (!fileSave) fileSave = this->fileName;
-	else this->fileName = fileSave;
+	if (!fileSave) fileSave = DataProcessor::fileName;
+	else DataProcessor::fileName = fileSave;
 
 	wofstream outfile;
 	outfile.open(fileSave, ios_base::out);
@@ -193,25 +195,26 @@ void TableView::HandleSortState(LPARAM lParam)
 {
 	auto pLVInfo = (LPNMLISTVIEW)lParam;
 	auto lParamSort = 1 + pLVInfo->iSubItem;
+
 	switch (this->order)
-    {
-    case SortState::Unsorted:
-		FillTable(this->fileName);
+	{
+	case SortState::Unsorted:
+		FillTable(DataProcessor::fileName);
 		this->order = SortState::Ascending;
-        break;
-    case SortState::Ascending:
+		break;
+	case SortState::Ascending:
 		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortAsc, lParamSort);
 		this->order = SortState::Descending;
-        break;
-    case SortState::Descending:
+		break;
+	case SortState::Descending:
 		ListView_SortItemsEx(pLVInfo->hdr.hwndFrom, CallBackSortDesc, lParamSort);
 		this->order = SortState::Unsorted;
-        break;
-    default:
+		break;
+	default:
 		string message = "Unknown sorting state: " + to_string((int)this->order);
 		throw new exception(message.c_str());
-        break;
-    }
+		break;
+	}
 }
 
 
@@ -341,12 +344,12 @@ bool TableView::DoubleTryParse(wstring str, double* out)
 	}
 }
 
-static int CALLBACK CallBackSortAsc(LPARAM lParam1, LPARAM lParam2)
+static int CALLBACK CallBackSortAsc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	if (thisPtr) return thisPtr->CompareListItemsAsc(lParam1, lParam2);
 }
 
-static int CALLBACK CallBackSortDesc(LPARAM lParam1, LPARAM lParam2)
+static int CALLBACK CallBackSortDesc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	if (thisPtr) return thisPtr->CompareListItemsDesc(lParam1, lParam2);
 }

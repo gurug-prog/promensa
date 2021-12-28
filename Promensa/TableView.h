@@ -17,15 +17,16 @@ private:
 	vector<wstring> columns;
 	vector<vector<wstring>> rows;
 	RECT rcl;
-	LPWSTR fileName;
 private:
 	void AddColumn(int, wstring, int);
 	void AddRow(int, int, vector<wstring>);
-	bool DoubleTryParse(wstring, double*);
-	void Clear();
 	wstring GetCell(int, int);
-	void ReadFile(LPWSTR);
+	void Clear();
 	void HandleSortState(LPARAM);
+
+	// DataProcessor
+	void ReadFile(LPWSTR);
+	bool DoubleTryParse(wstring, double*);
 	vector<wstring> Split(wstring, wstring);
 	vector<wstring> GetEntitiesStrings();
 public:
@@ -34,7 +35,10 @@ public:
 	~TableView();
 	void OnColumnClick(LPARAM);
 	void FillTable(LPWSTR);
+
+	// DataProcessor
 	void SaveFile(LPWSTR);
+	// Unknown class
 	int CompareListItemsAsc(LPARAM, LPARAM);
 	int CompareListItemsDesc(LPARAM, LPARAM);
 };

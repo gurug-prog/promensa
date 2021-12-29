@@ -18,6 +18,7 @@ private:
 	vector<vector<wstring>> rows;
 	RECT rcl;
 private:
+	void SetFont(HWND);
 	void AddColumn(int, wstring, int);
 	void AddRow(int, int, vector<wstring>);
 	wstring GetCell(int, int);

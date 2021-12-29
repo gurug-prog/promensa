@@ -28,16 +28,34 @@ TableView::TableView(HWND hWndParent)
 	int listHeight = rcl.bottom - rcl.top;
 
 	this->hWndList = CreateWindow(WC_LISTVIEW, L"",
-		WS_VISIBLE | WS_BORDER | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
+		WS_VISIBLE | WS_BORDER | WS_CHILD | LVS_REPORT,
 		x, y, listWidth, listHeight,
 		hWndParent, (HMENU)IDC_LISTVIEW, hInst, 0);
+	ListView_SetExtendedListViewStyle(this->hWndList, LVS_EX_FULLROWSELECT);
 	this->selectedCol = 0;
 	this->order = SortState::Unsorted;
 	thisPtr = this;
+	this->SetFont(hWndParent);
 }
 
 TableView::~TableView()
 {
+}
+
+LOGFONT logFont;
+HFONT hFont;
+
+void TableView::SetFont(HWND hWnd)
+{
+	//LONG fontSize = 20;
+	//LPCWSTR fontFamily = L"Times new Roman";
+	
+	memset(&logFont, 0, sizeof(LOGFONT));
+	logFont.lfHeight = 20;
+	wcscpy_s(logFont.lfFaceName, L"Consolas");
+	hFont = CreateFontIndirect(&logFont);
+
+	PostMessage(this->hWndList, WM_SETFONT, (WPARAM)hFont, TRUE);
 }
 
 void TableView::AddColumn(int columnIndex, wstring value, int width)

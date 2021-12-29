@@ -10,8 +10,9 @@ using namespace std;
 
 class TableView
 {
-private:
+public:
 	HWND hWndList;
+private:
 	SortState order;
 	int selectedCol;
 	vector<wstring> columns;

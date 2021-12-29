@@ -16,6 +16,7 @@
 #define IDM_FILE_OPEN                   32771
 #define IDM_FILE_SAVE                   32772
 #define IDM_FILE_SAVEAS                 32773
+#define ID_QUIT							32774
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

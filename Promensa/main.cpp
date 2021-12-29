@@ -3,9 +3,9 @@
 
 #include "framework.h"
 #include "Promensa.h"
-#include "TableView.h"
+#include "CellEditor.h"
 #include "DataProcessor.h"
-#include "commdlg.h"
+#include "DialogInvoker.h"
 
 #define MAX_LOADSTRING 100
 
@@ -19,9 +19,7 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 TableView* tv = nullptr;
-
-LPWSTR ProcessOpenDlg(HWND);
-LPWSTR ProcessSaveAsDlg(HWND);
+CellEditor* ce = nullptr;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -84,8 +82,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	hInst = hInstance;
 
+	int nWidth = 800;
+	int nHeight = 500;
+
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, 800, 500, nullptr, nullptr, hInstance, nullptr);
+		CW_USEDEFAULT, 0, nWidth, nHeight, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hWnd)
 	{
@@ -102,43 +103,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
+	case WM_LBUTTONDOWN:
+		if (ce) ce->OnDestroyWindow();
+		break;
 	case WM_NOTIFY:
 	{
 		LPNMHDR lpnmhdr = (LPNMHDR)lParam;
-		if (lpnmhdr->idFrom == IDC_LISTVIEW &&
-			lpnmhdr->code == LVN_COLUMNCLICK)
+		if (lpnmhdr->idFrom == IDC_LISTVIEW && lpnmhdr->code == LVN_COLUMNCLICK)
 			tv->OnColumnClick(lParam);
+		switch (((LPNMHDR)lParam)->code)
+		{
+		case NM_CLICK:
+			if (ce) ce->OnDestroyWindow();
+			break;
+		case NM_DBLCLK:
+			if(ce)ce->CreateEditBox(hWnd, (NMLISTVIEW*)lParam);
+			break;
+		}
 		break;
 	}
 	case WM_CREATE:
-	{
 		tv = new TableView(hWnd);
+		ce = new CellEditor(tv);
 		break;
-	}
+	case WM_SIZE:
+		tv->OnSize(hWnd);
+		break;
 	case WM_COMMAND:
 	{
 		int wmId = LOWORD(wParam);
 		switch (wmId)
 		{
 		case IDM_FILE_OPEN:
-		{
-			//tv->OnFileOpen();
-			auto fileName = ProcessOpenDlg(hWnd);
-			if (fileName) tv->FillTable(fileName);
+			if (tv) tv->OnFileOpen(hWnd);
 			break;
-		}
 		case IDM_FILE_SAVE:
-		{
 			if (tv) tv->OnFileSave();
 			break;
-		}
 		case IDM_FILE_SAVEAS:
-		{
-			//tv->OnFileSaveAs();
-			//auto fileName = ProcessSaveAsDlg(hWnd);
-			//if (fileName) DataProcessor::SaveFile(fileName);
+			if (tv) tv->OnFileSaveAs(hWnd);
 			break;
-		}
+		case IDM_UNDO:
+			if (ce) ce->OnUndo();
+			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
@@ -184,42 +191,4 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	return (INT_PTR)FALSE;
-}
-
-LPWSTR ProcessOpenDlg(HWND hWnd)
-{
-	LPWSTR fileName = new WCHAR[256];
-
-	OPENFILENAME ofn;
-	fileName[0] = 0;
-	memset(&ofn, 0, sizeof(OPENFILENAME));
-
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = L"TSV-files	(*.tsv)\0*.tsv\0\0";
-	ofn.lpstrDefExt = L"tsv";
-	ofn.lpstrFile = fileName;
-	ofn.nMaxFile = 256;
-
-	if (GetOpenFileName(&ofn)) return fileName;
-	else return NULL;
-}
-
-LPWSTR ProcessSaveAsDlg(HWND hWnd)
-{
-	LPWSTR fileName = new WCHAR[256];
-
-	OPENFILENAME ofn;
-	fileName[0] = 0;
-	memset(&ofn, 0, sizeof(OPENFILENAME));
-
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = L"TSV-files	(*.tsv)\0*.tsv\0\0";
-	ofn.lpstrDefExt = L"tsv";
-	ofn.lpstrFile = fileName;
-	ofn.nMaxFile = 256;
-
-	if (GetSaveFileName(&ofn)) return fileName;
-	else return NULL;
 }

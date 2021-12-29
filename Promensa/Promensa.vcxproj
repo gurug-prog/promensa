@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CellEditor.h" />
     <ClInclude Include="DataProcessor.h" />
     <ClInclude Include="DialogInvoker.h" />
     <ClInclude Include="framework.h" />
@@ -147,8 +148,10 @@
     <ClInclude Include="SortState.h" />
     <ClInclude Include="TableView.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TextChange.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CellEditor.cpp" />
     <ClCompile Include="DataProcessor.cpp" />
     <ClCompile Include="DialogInvoker.cpp" />
     <ClCompile Include="main.cpp" />

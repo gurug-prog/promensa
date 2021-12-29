@@ -16,6 +16,9 @@
     <Filter Include="Header Files\Classes">
       <UniqueIdentifier>{c26fb44f-b163-4473-bc4c-9c66e88aafee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Classes">
+      <UniqueIdentifier>{d015b209-01e7-42c9-bd51-b08e8301cfe7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -39,22 +42,31 @@
     <ClInclude Include="TableView.h">
       <Filter>Header Files\Classes</Filter>
     </ClInclude>
+    <ClInclude Include="CellEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="SortState.h">
-      <Filter>Header Files\Classes</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextChange.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TableView.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DialogInvoker.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Classes</Filter>
     </ClCompile>
     <ClCompile Include="DataProcessor.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="TableView.cpp">
+      <Filter>Source Files\Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="CellEditor.cpp">
+      <Filter>Source Files\Classes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

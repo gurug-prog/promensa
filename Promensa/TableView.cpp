@@ -1,7 +1,7 @@
 #include "TableView.h"
 #include "Promensa.h"
-#include <fstream>
 #include "DataProcessor.h"
+#include "DialogInvoker.h"
 
 
 static TableView* thisPtr = nullptr;
@@ -28,16 +28,35 @@ TableView::TableView(HWND hWndParent)
 	int listHeight = rcl.bottom - rcl.top;
 
 	this->hWndList = CreateWindow(WC_LISTVIEW, L"",
-		WS_VISIBLE | WS_BORDER | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
+		WS_VISIBLE | WS_BORDER | WS_CHILD | LVS_REPORT,
 		x, y, listWidth, listHeight,
 		hWndParent, (HMENU)IDC_LISTVIEW, hInst, 0);
+	ListView_SetExtendedListViewStyle(this->hWndList, LVS_EX_FULLROWSELECT);
 	this->selectedCol = 0;
 	this->order = SortState::Unsorted;
 	thisPtr = this;
+	this->SetFont(hWndParent);
 }
 
 TableView::~TableView()
 {
+}
+
+HWND TableView::GetHWND()
+{
+	return this->hWndList;
+}
+
+void TableView::SetFont(HWND hWnd)
+{
+	LOGFONT logFont;
+	HFONT hFont;
+	memset(&logFont, 0, sizeof(LOGFONT));
+	logFont.lfHeight = 20;
+	wcscpy_s(logFont.lfFaceName, L"Consolas");
+	hFont = CreateFontIndirect(&logFont);
+
+	PostMessage(this->hWndList, WM_SETFONT, (WPARAM)hFont, TRUE);
 }
 
 void TableView::AddColumn(int columnIndex, wstring value, int width)
@@ -73,6 +92,12 @@ void TableView::AddRow(int colsCount, int rowIndex, vector<wstring> row)
 		if (columnIndex > 0) ListView_SetItem(hWndList, &lvi);
 		else ListView_InsertItem(hWndList, &lvi);
 	}
+}
+
+void TableView::SetText(int iCol, int iRow, wstring text)
+{
+	ListView_SetItemText(this->hWndList, iRow,
+		iCol, const_cast<LPWSTR>(text.c_str()));
 }
 
 wstring TableView::GetCell(int row, int col)
@@ -127,52 +152,6 @@ void TableView::FillTable(LPWSTR fileInput)
 	}
 }
 
-//void TableView::SaveFile(LPWSTR fileSave)
-//{
-//	if (!fileSave) fileSave = DataProcessor::fileName;
-//	else DataProcessor::fileName = fileSave;
-//
-//	wofstream outfile;
-//	outfile.open(fileSave, ios_base::out);
-//
-//	//wstring outStr;
-//	//wstring delim = L"\t";
-//	//wstring eol = L"\n";
-//
-//	auto entitiesStrs = GetEntitiesStrings();
-//	for (int i = 0; i < entitiesStrs.size(); ++i)
-//		outfile << entitiesStrs[i];
-//	//// write columns
-//	//for (int i = 0; i < columns.size(); ++i)
-//	//{
-//	//    if (i == columns.size() - 1)
-//	//    {
-//	//        outStr = outStr + columns[i] + eol;
-//	//        break;
-//	//    }
-//	//    outStr = outStr + columns[i] + delim;
-//	//}
-//	//outfile << outStr;
-//	//outStr = L"";
-//
-//	//// write rows
-//	//for (int i = 0; i < rows.size(); ++i)
-//	//{
-//	//    auto row = rows[i];
-//	//    for (int j = 0; j < row.size(); ++j)
-//	//    {
-//	//        if (j == row.size() - 1)
-//	//        {
-//	//            outStr = outStr + row[j] + eol;
-//	//            break;
-//	//        }
-//	//        outStr = outStr + row[j] + delim;
-//	//    }
-//	//    outfile << outStr;
-//	//    outStr = L"";
-//	//}
-//}
-
 void TableView::OnColumnClick(LPARAM lParam)
 {
 	auto pLVInfo = (LPNMLISTVIEW)lParam;
@@ -185,10 +164,33 @@ void TableView::OnColumnClick(LPARAM lParam)
 	this->HandleSortState(lParam);
 }
 
+void TableView::OnSize(HWND hWnd)
+{
+	RECT rc;
+	if (this->hWndList)
+	{
+		GetClientRect(hWnd, &rc);
+		MoveWindow(this->hWndList, 0, 0, rc.right - rc.left, rc.bottom - rc.top, FALSE);
+	}
+}
+
+void TableView::OnFileOpen(HWND hWnd)
+{
+	auto fileName = DialogInvoker::ProcessOpenDlg(hWnd);
+	if (fileName) this->FillTable(fileName);
+}
+
 void TableView::OnFileSave()
 {
 	auto lines = this->GetEntitiesStrings();
 	DataProcessor::SaveFile(nullptr, lines);
+}
+
+void TableView::OnFileSaveAs(HWND hWnd)
+{
+	auto fileName = DialogInvoker::ProcessSaveAsDlg(hWnd);
+	auto lines = this->GetEntitiesStrings();
+	if (fileName) DataProcessor::SaveFile(fileName, lines);
 }
 
 void TableView::HandleSortState(LPARAM lParam)
@@ -311,4 +313,3 @@ static int CALLBACK CallBackSortDesc(LPARAM lParam1, LPARAM lParam2, LPARAM lPar
 {
 	if (thisPtr) return thisPtr->CompareListItemsDesc(lParam1, lParam2);
 }
-

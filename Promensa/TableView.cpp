@@ -22,7 +22,7 @@ TableView::TableView(HWND hWndParent)
 	InitCommonControls();
 	const auto hInst = (HINSTANCE)GetWindowLong(hWndParent, GWL_HINSTANCE);
 
-	int x = 0, y = 0;
+	int x = 0, y = 37;
 	GetClientRect(hWndParent, &rcl);
 	int listWidth = rcl.right - rcl.left;
 	int listHeight = rcl.bottom - rcl.top;
@@ -170,7 +170,7 @@ void TableView::OnSize(HWND hWnd)
 	if (this->hWndList)
 	{
 		GetClientRect(hWnd, &rc);
-		MoveWindow(this->hWndList, 0, 0, rc.right - rc.left, rc.bottom - rc.top, FALSE);
+		MoveWindow(this->hWndList, 0, 37, rc.right - rc.left, rc.bottom - rc.top - 37, FALSE);
 	}
 }
 

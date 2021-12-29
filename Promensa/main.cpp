@@ -6,6 +6,7 @@
 #include "CellEditor.h"
 #include "DataProcessor.h"
 #include "DialogInvoker.h"
+#include "ToolbarProcessor.h"
 
 #define MAX_LOADSTRING 100
 
@@ -20,6 +21,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 TableView* tv = nullptr;
 CellEditor* ce = nullptr;
+ToolBarProcessor tp;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -103,11 +105,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
+	case WM_CREATE:
+	{
+		tv = new TableView(hWnd);
+		ce = new CellEditor(tv);
+		tp.OnCreate(hWnd);
+		break;
+	}
 	case WM_LBUTTONDOWN:
 		if (ce) ce->OnDestroyWindow();
 		break;
 	case WM_NOTIFY:
 	{
+		tp.OnNotify(hWnd, wParam, lParam);
 		LPNMHDR lpnmhdr = (LPNMHDR)lParam;
 		if (lpnmhdr->idFrom == IDC_LISTVIEW && lpnmhdr->code == LVN_COLUMNCLICK)
 			tv->OnColumnClick(lParam);
@@ -122,24 +132,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
-	case WM_CREATE:
-		tv = new TableView(hWnd);
-		ce = new CellEditor(tv);
-		break;
 	case WM_SIZE:
-		tv->OnSize(hWnd);
+		if (tv) tv->OnSize(hWnd);
+		tp.OnSize(hWnd);
 		break;
 	case WM_COMMAND:
 	{
 		int wmId = LOWORD(wParam);
 		switch (wmId)
 		{
+		case ID_TOOL_OPEN:
 		case IDM_FILE_OPEN:
 			if (tv) tv->OnFileOpen(hWnd);
 			break;
+		case ID_TOOL_SAVE:
 		case IDM_FILE_SAVE:
 			if (tv) tv->OnFileSave();
 			break;
+		case ID_TOOL_SAVEAS:
 		case IDM_FILE_SAVEAS:
 			if (tv) tv->OnFileSaveAs(hWnd);
 			break;

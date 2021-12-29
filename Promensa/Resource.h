@@ -17,6 +17,10 @@
 #define IDM_FILE_SAVE                   32772
 #define IDM_FILE_SAVEAS                 32773
 #define IDM_UNDO                        32780
+#define ID_TOOL_OPEN					6000
+#define ID_TOOL_SAVE					6001
+#define ID_TOOL_SAVEAS					6002
+#define IDC_TOOLBAR						7000
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

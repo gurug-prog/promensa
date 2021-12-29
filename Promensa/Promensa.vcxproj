@@ -149,6 +149,7 @@
     <ClInclude Include="TableView.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TextChange.h" />
+    <ClInclude Include="ToolbarProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CellEditor.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="DialogInvoker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="TableView.cpp" />
+    <ClCompile Include="ToolbarProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Promensa.rc" />

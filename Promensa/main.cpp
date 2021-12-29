@@ -117,7 +117,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (ce) ce->OnDestroyWindow();
 			break;
 		case NM_DBLCLK:
-			ce->CreateEditBox(hWnd, (NMLISTVIEW*)lParam);
+			if(ce)ce->CreateEditBox(hWnd, (NMLISTVIEW*)lParam);
 			break;
 		}
 		break;
@@ -142,6 +142,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDM_FILE_SAVEAS:
 			if (tv) tv->OnFileSaveAs(hWnd);
+			break;
+		case IDM_UNDO:
+			if (ce) ce->OnUndo();
 			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);

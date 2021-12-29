@@ -36,7 +36,7 @@ void CellEditor::CreateEditBox(HWND hWnd, NMLISTVIEW* _lParam)
 	
 	/*	Create the edit box inside the cell I want to modify. I need to get
 		the coordinates of the upper-left and lower-right corners of the cell	*/
-	ListView_GetSubItemRect(table->hWndList, _lParam->iItem, _lParam->iSubItem, LVIR_LABEL, &r);
+	ListView_GetSubItemRect(table->GetHWND(), _lParam->iItem, _lParam->iSubItem, LVIR_LABEL, &r);
 
 
 	this->hEditable = CreateWindowEx(0, WC_EDIT,
@@ -45,7 +45,7 @@ void CellEditor::CreateEditBox(HWND hWnd, NMLISTVIEW* _lParam)
 		r.left, r.top,
 		r.right - r.left,
 		r.bottom - r.top,
-		table->hWndList,
+		table->GetHWND(),
 		NULL, hInst, 0);
 
 	SendMessage(this->hEditable, EM_LIMITTEXT, bufferSize, 0);		//	It accepts no more than bufferSize chars
@@ -73,27 +73,40 @@ LRESULT CellEditor::EditBoxWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 			LV_ITEM LvItem;
 			WCHAR text[257] = L"";
 
-			LvItem.iItem = (int)GetProp(thisPtr->hEditable, L"ITEM");			//	Item changed
-			LvItem.iSubItem = (int)GetProp(thisPtr->hEditable, L"SUBITEM");	//	SubItem changed
+			int iRow = (int)GetProp(thisPtr->hEditable, L"ITEM");
+			int iCol = (int)GetProp(thisPtr->hEditable, L"SUBITEM");
+			auto oldText = this->table->GetCell(iRow, iCol);
+
+			TextChange change =
+			{
+				iCol,
+				iRow,
+				oldText
+			};
+
+			changes.push_back(change);
+
+			LvItem.iItem = iRow;			//	Item changed
+			LvItem.iSubItem = iCol;	//	SubItem changed
 			LvItem.pszText = text;								//	Where to store the new text
 			GetWindowText(thisPtr->hEditable, text, sizeof(text));		//	Get new text and set it in the subitem
-			SendMessage(thisPtr->table->hWndList, LVM_SETITEMTEXT, (WPARAM)GetProp(hEditable, L"ITEM"), (LPARAM)&LvItem);
+			SendMessage(thisPtr->table->GetHWND(), LVM_SETITEMTEXT, (WPARAM)GetProp(hEditable, L"ITEM"), (LPARAM)&LvItem);
 			DestroyWindow(hEditable);							//	Now I can destroy the edit box
 		}
 		else if (LOWORD(wParam) == VK_ESCAPE)
-			DestroyWindow(thisPtr->hEditable);							//	Abort operation...
+			DestroyWindow(thisPtr->hEditable);
 		break;
 	case WM_DESTROY:
 		RemoveProp(thisPtr->hEditable, L"WP_OLD");
 		RemoveProp(thisPtr->hEditable, L"ITEM");
 		RemoveProp(thisPtr->hEditable, L"SUBITEM");
-		//	Restore the original window procedure
+
 		SetWindowLong(thisPtr->hEditable, GWL_WNDPROC, (LONG)GetProp(thisPtr->hEditable, L"WP_OLD"));
 		hEditable = NULL;
 		break;
 	default:
-		//	Default messages are passed to the original window procedure
-		return CallWindowProc((WNDPROC)GetProp(hEditable, L"WP_OLD"), hwnd, uMsg, wParam, lParam);
+		return CallWindowProc((WNDPROC)GetProp(hEditable, L"WP_OLD"),
+			hwnd, uMsg, wParam, lParam);
 	}
 	return 0;
 }
@@ -106,4 +119,15 @@ static LRESULT APIENTRY CallEditBoxWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 void CellEditor::OnDestroyWindow()
 {
 	if (this->hEditable) DestroyWindow(this->hEditable);
+}
+
+void CellEditor::OnUndo()
+{
+	if (changes.size() > 0)
+	{
+		auto change = changes[changes.size() - 1];
+		table->SetText(change.iCol, change.iRow, change.text);
+		changes.pop_back();
+	}
+	else return;
 }

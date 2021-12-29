@@ -1,19 +1,17 @@
 #pragma once
 #include "TableView.h"
 #include "framework.h"
-#include <commctrl.h>
-#pragma comment (lib, "comctl32.lib")
+#include "TextChange.h"
 
 typedef unsigned int uint;
 
 class CellEditor
 {
-public:
 	HWND hEditable;
-private:
 	TableView* table;
 	uint uCurrentItem;
 	uint uCurrentSubItem;
+	vector<TextChange> changes;
 public:
 	CellEditor();
 	~CellEditor();
@@ -21,4 +19,5 @@ public:
 	LRESULT EditBoxWndProc(HWND, UINT, WPARAM, LPARAM);
 	void CreateEditBox(HWND, NMLISTVIEW*);
 	void OnDestroyWindow();
+	void OnUndo();
 };

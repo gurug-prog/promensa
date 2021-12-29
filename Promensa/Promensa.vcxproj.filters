@@ -42,10 +42,13 @@
     <ClInclude Include="TableView.h">
       <Filter>Header Files\Classes</Filter>
     </ClInclude>
-    <ClInclude Include="SortState.h">
-      <Filter>Header Files\Classes</Filter>
-    </ClInclude>
     <ClInclude Include="CellEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SortState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextChange.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

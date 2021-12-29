@@ -10,9 +10,8 @@ using namespace std;
 
 class TableView
 {
-public:
-	HWND hWndList;
 private:
+	HWND hWndList;
 	SortState order;
 	int selectedCol;
 	vector<wstring> columns;
@@ -27,15 +26,17 @@ private:
 	void HandleSortState(LPARAM);
 	vector<wstring> GetEntitiesStrings();
 public:
-	wstring GetCell(int, int);
 	TableView();
 	TableView(HWND);
 	~TableView();
+	HWND GetHWND();
 	void OnColumnClick(LPARAM);
 	void OnSize(HWND);
 	void OnFileOpen(HWND);
 	void OnFileSave();
 	void OnFileSaveAs(HWND);
+	wstring GetCell(int, int);
+	void SetText(int, int, wstring);
 	int CompareListItemsAsc(LPARAM, LPARAM);
 	int CompareListItemsDesc(LPARAM, LPARAM);
 };

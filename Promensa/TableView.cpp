@@ -42,14 +42,15 @@ TableView::~TableView()
 {
 }
 
-LOGFONT logFont;
-HFONT hFont;
+HWND TableView::GetHWND()
+{
+	return this->hWndList;
+}
 
 void TableView::SetFont(HWND hWnd)
 {
-	//LONG fontSize = 20;
-	//LPCWSTR fontFamily = L"Times new Roman";
-	
+	LOGFONT logFont;
+	HFONT hFont;
 	memset(&logFont, 0, sizeof(LOGFONT));
 	logFont.lfHeight = 20;
 	wcscpy_s(logFont.lfFaceName, L"Consolas");
@@ -91,6 +92,12 @@ void TableView::AddRow(int colsCount, int rowIndex, vector<wstring> row)
 		if (columnIndex > 0) ListView_SetItem(hWndList, &lvi);
 		else ListView_InsertItem(hWndList, &lvi);
 	}
+}
+
+void TableView::SetText(int iCol, int iRow, wstring text)
+{
+	ListView_SetItemText(this->hWndList, iRow,
+		iCol, const_cast<LPWSTR>(text.c_str()));
 }
 
 wstring TableView::GetCell(int row, int col)

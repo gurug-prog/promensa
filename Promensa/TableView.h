@@ -22,12 +22,12 @@ private:
 	void SetFont(HWND);
 	void AddColumn(int, wstring, int);
 	void AddRow(int, int, vector<wstring>);
-	wstring GetCell(int, int);
 	void FillTable(LPWSTR);
 	void Clear();
 	void HandleSortState(LPARAM);
 	vector<wstring> GetEntitiesStrings();
 public:
+	wstring GetCell(int, int);
 	TableView();
 	TableView(HWND);
 	~TableView();
